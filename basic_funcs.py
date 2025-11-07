@@ -6,7 +6,7 @@ def read_cat(tile: str) -> pd.DataFrame:
     Read a CFIS tile.cat with comment headers.
 
     Parameters:
-        tile (str): Name of the tile of interest. (ie. CFIS_LSB.xxx.yyy.r)
+        tile (str): Path to the tile of interest. (ie. CFIS_LSB.xxx.yyy.r)
 
     Returns:
         A pandas dataframe of the .cat file.
@@ -142,6 +142,11 @@ def get_mask(tile: str):
     Returns.
         2D array of the contents of MaskData in the .h5 file.
     """
-    source = Path(f"/arc/projects/NearbyDwarfSearching/masks/{tile}/{tile}.mask.h5")
+    # source = Path(f"/arc/projects/NearbyDwarfSearching/masks/{tile}/{tile}.mask.h5")
+    source = Path(MASK_DIR) / f"{tile}.mask.h5"
+
+    if not source.exists():
+        raise FileNotFoundError(f"Mask file not found: {source}")
+
     with h5py.File(source, 'r') as file:
         return file["MaskData"][:]
