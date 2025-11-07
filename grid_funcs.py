@@ -124,6 +124,81 @@ def flag_regions(tile: str, gridded_file: str) -> pd.DataFrame:
     
     return df
 
+def flag_magllim(gridded_file: str) -> pd.DataFrame:
+    """
+    Flags sources in a gridded catalogue based on magnitude threshold.
+
+    Parameters:
+        gridded_file (str): Path to the gridded catalogue CSV file.
+
+    Returns:
+        pandas.DataFrame: Updated catalogue with a new boolean column 'MAG_ABOVE_18'.
+    """
+    df = pd.read_csv(gridded_file)
+
+    if "MAG_AUTO" not in df.columns:
+        raise KeyError("The catalogue does not contain a 'MAG_AUTO' column.")
+
+    df[f"MAG_ABOVE_{MAG_LLIM}"] = df["MAG_AUTO"] > MAG_LLIM
+
+    df.to_csv(gridded_file, index=False)
+
+    print(f"Saved updated catalogue with magnitude flags to: {gridded_file}")
+
+    return df
+
+def flag_magulim(gridded_file: str) -> pd.DataFrame:
+    """
+    Flags sources in a gridded catalogue based on magnitude threshold.
+
+    Parameters:
+        gridded_file (str): Path to the gridded catalogue CSV file.
+
+    Returns:
+        pandas.DataFrame: Updated catalogue with a new boolean column 'MAG_ABOVE_18'.
+    """
+    df = pd.read_csv(gridded_file)
+
+    if "MAG_AUTO" not in df.columns:
+        raise KeyError("The catalogue does not contain a 'MAG_AUTO' column.")
+
+    df[f"MAG_BELOW_{MAG_ULIM}"] = df["MAG_AUTO"] < MAG_ULIM
+
+    df.to_csv(gridded_file, index=False)
+
+    print(f"Saved updated catalogue with magnitude flags to: {gridded_file}")
+
+    return df
+
+def flag_size(gridded_file: str) -> pd.DataFrame:
+    """
+    Flags sources in a gridded catalogue based on magnitude threshold.
+
+    Parameters:
+        gridded_file (str): Path to the gridded catalogue CSV file.
+
+    Returns:
+        pandas.DataFrame: Updated catalogue with a new boolean column 'MAG_ABOVE_18'.
+    """
+    df = pd.read_csv(gridded_file)
+
+    if "FLUX_SIZE" not in df.columns:
+        raise KeyError("The catalogue does not contain a 'MAG_AUTO' column.")
+
+    df[f"SIZE_ABOVE_{SIZE_LIM}"] = df["FLUX_SIZE"] > SIZE_LIM
+
+    df.to_csv(gridded_file, index=False)
+
+    print(f"Saved updated catalogue with flux radius flags to: {gridded_file}")
+
+    return df
+
+def flagging(tile: str, gridded_file: str):
+    flag_regions(tile, gridded_file)
+    flag_magllim(gridded_file)
+    flag_magulim(gridded_file)
+    flag_size(gridded_file)
+
 def add_good_fraction(tile: str, centers_file: str):
     """
     Adds a 'good_fraction' column to centers_file based on the mask.
@@ -180,7 +255,7 @@ def add_grid_counts(gridded_file: str, centers_file: str) -> None:
     grid_info = pd.read_csv(centers_file)
 
     required_columns = ["i", "j", "X_IMAGE", "Y_IMAGE", 
-                        "GOOD_REGION", "good_fraction"]
+                        "GOOD_REGION"]
     for col in required_columns:
         if col not in gridded_df.columns:
             raise ValueError(f"Input catalogue must have column '{col}'")

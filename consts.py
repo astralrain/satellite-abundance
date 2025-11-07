@@ -23,3 +23,9 @@ HEADER_DIR = "headers"
 HEADER_END = "_header"
 
 TILE_SIZE = 10000
+
+MASK_DIR = "masks"
+MAG_ULIM = 24.5
+MAG_LLIM = 18
+
+SIZE_LIM = 3
