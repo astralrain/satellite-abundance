@@ -207,9 +207,10 @@ marimo/_lsp/
 __marimo__/
 
 test.py
+tenpercent_sdss_primaries_with_mask.csv
 
 cats/
-filtered_matched_obj/
+filter_matched_obj/
 grid_centers/
 gridded_cats/
 headers/
