@@ -208,6 +208,7 @@ __marimo__/
 
 test.py
 tenpercent_sdss_primaries_with_mask.csv
+main.ipynb
 
 cats/
 filter_matched_obj/
