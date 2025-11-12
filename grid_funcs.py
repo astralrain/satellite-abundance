@@ -182,10 +182,10 @@ def flag_size(gridded_file: str) -> pd.DataFrame:
     """
     df = pd.read_csv(gridded_file)
 
-    if "FLUX_SIZE" not in df.columns:
-        raise KeyError("The catalogue does not contain a 'MAG_AUTO' column.")
+    if "FLUX_RADIUS" not in df.columns:
+        raise KeyError("The catalogue does not contain a 'FLUX_RADIUS' column.")
 
-    df[f"SIZE_ABOVE_{SIZE_LIM}"] = df["FLUX_SIZE"] > SIZE_LIM
+    df[f"SIZE_ABOVE_{SIZE_LIM}"] = df["FLUX_RADIUS"] > SIZE_LIM
 
     df.to_csv(gridded_file, index=False)
 
