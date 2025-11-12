@@ -213,7 +213,10 @@ main.ipynb
 cats/
 filter_matched_obj/
 grid_centers/
+grid_centers_10/
 gridded_cats/
+gridded_cats_10/
 headers/
 masks/
 sdss_primaries/
+sdss_primaries_10/
