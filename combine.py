@@ -37,4 +37,4 @@ def combine_primary_info(input_dir: str, output_file: str) -> None:
     combined_df.to_csv(output_file, index=False)
     print(f"Combined {len(csv_files)} files into {output_file}")
 
-combine_primary_info(SDSS_PRIMARY_DIR, "tenpercent_sdss_primaries_with_mask.csv")
+combine_primary_info("sdss_primaries_10", "subset_sdss_primaries_10.csv")
