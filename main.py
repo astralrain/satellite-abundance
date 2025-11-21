@@ -30,13 +30,13 @@ def process_galaxy(galaxy_file: str, output_dir: str):
         if not grid_file.exists():
             print(f"Gridded catalog for {tile} not found, generating files.")
             cat_df = read_cat(cat_file)
-            grid_tile(tile, cat_df, 5)
+            grid_tile(tile, cat_df)
             flagging(tile, grid_file)
         
         if not grid_center_file.exists():
             print(f"Grid centers for {tile} not found, generating files.")
             cat_df = read_cat(cat_file)
-            compute_grid_centers(tile, 5)
+            compute_grid_centers(tile)
             add_good_fraction(tile, grid_center_file)
             add_grid_counts(grid_file, grid_center_file)
         
