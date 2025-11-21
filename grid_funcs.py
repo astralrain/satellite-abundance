@@ -106,6 +106,10 @@ def flag_regions(tile: str, gridded_file: str) -> pd.DataFrame:
     """
     df = pd.read_csv(gridded_file)
 
+    if f"GOOD_REGION" in df.columns:
+        print(f"The catalogue already contains a 'GOOD_REGION' column.")
+        return
+
     mask = get_mask(tile)
     ny, nx = mask.shape
 
@@ -139,11 +143,15 @@ def flag_magllim(gridded_file: str) -> pd.DataFrame:
     if "MAG_AUTO" not in df.columns:
         raise KeyError("The catalogue does not contain a 'MAG_AUTO' column.")
 
-    df[f"MAG_ABOVE_{MAG_LLIM}"] = df["MAG_AUTO"] > MAG_LLIM
+    if f"MAG_BELOW_{MAG_ULIM}" in df.columns:
+        print(f"The catalogue already contains a 'MAG_BELOW_{MAG_ULIM}' column.")
+        return
+
+    df[f"MAG_BELOW_{MAG_ULIM}"] = df["MAG_AUTO"] < MAG_ULIM
 
     df.to_csv(gridded_file, index=False)
 
-    print(f"Saved updated catalogue with magnitude flags to: {gridded_file}")
+    print(f"Saved updated catalogue with magnitude flags below {MAG_ULIM} to: {gridded_file}")
 
     return df
 
@@ -162,11 +170,15 @@ def flag_magulim(gridded_file: str) -> pd.DataFrame:
     if "MAG_AUTO" not in df.columns:
         raise KeyError("The catalogue does not contain a 'MAG_AUTO' column.")
 
+    if f"MAG_BELOW_{MAG_ULIM}" in df.columns:
+        print(f"The catalogue already contains a 'MAG_BELOW_{MAG_ULIM}' column.")
+        return
+
     df[f"MAG_BELOW_{MAG_ULIM}"] = df["MAG_AUTO"] < MAG_ULIM
 
     df.to_csv(gridded_file, index=False)
 
-    print(f"Saved updated catalogue with magnitude flags to: {gridded_file}")
+    print(f"Saved updated catalogue with magnitude flags below {MAG_ULIM} to: {gridded_file}")
 
     return df
 
@@ -185,11 +197,15 @@ def flag_size(gridded_file: str) -> pd.DataFrame:
     if "FLUX_RADIUS" not in df.columns:
         raise KeyError("The catalogue does not contain a 'FLUX_RADIUS' column.")
 
+    if f"SIZE_ABOVE_{SIZE_LIM}" in df.columns:
+        print(f"The catalogue already contains a 'SIZE_ABOVE_{SIZE_LIM}' column.")
+        return
+
     df[f"SIZE_ABOVE_{SIZE_LIM}"] = df["FLUX_RADIUS"] > SIZE_LIM
 
     df.to_csv(gridded_file, index=False)
 
-    print(f"Saved updated catalogue with flux radius flags to: {gridded_file}")
+    print(f"Saved updated catalogue with flux radius flags above {SIZE_LIM} to: {gridded_file}")
 
     return df
 
@@ -226,7 +242,10 @@ def add_good_fraction(tile: str, centers_file: str):
         submask = mask[ymin:ymax, xmin:xmax]
         total_pixels = submask.size
         good_pixels = np.sum(submask)
-        fraction = good_pixels / total_pixels if total_pixels > 0 else np.nan
+        if total_pixels > 0:
+            fraction = good_pixels / total_pixels
+        else:
+            fraction = np.nan
 
         good_fractions.append(fraction)
 
@@ -237,10 +256,11 @@ def add_good_fraction(tile: str, centers_file: str):
     print(f"Added 'good_fraction' column and saved to: {centers_file}")
     return df
 
-def add_grid_counts(gridded_file: str, centers_file: str) -> None:
+def grid_counts(gridded_file: str, centers_file: str) -> None:
     """
     Add normalized object counts per grid cell into centers_file,
-    using the GOOD_REGION flag from gridded_file and correcting for coverage fraction.
+    using the GOOD_REGION flag from gridded_file and correcting 
+    for coverage fraction.
 
     Parameters:
         gridded_file (str): Path to the input catalogue CSV.
@@ -251,16 +271,12 @@ def add_grid_counts(gridded_file: str, centers_file: str) -> None:
     Returns:
         None (writes to CSV).
     """
-    mag_above_col = f"MAG_ABOVE_{MAG_LLIM}"
-    mag_below_col = f"MAG_BELOW_{MAG_ULIM}"
-    size_above_col = f"SIZE_ABOVE_{SIZE_LIM}"
-    
     gridded_df = pd.read_csv(gridded_file)
     grid_info = pd.read_csv(centers_file)
 
     required_columns = ["i", "j", "X_IMAGE", "Y_IMAGE", 
-                        "GOOD_REGION", mag_above_col, 
-                        mag_below_col, size_above_col,]
+                        "GOOD_REGION", MAG_ABOVE, 
+                        MAG_BELOW, SIZE_ABOVE,]
     
     for col in required_columns:
         if col not in gridded_df.columns:
@@ -268,9 +284,9 @@ def add_grid_counts(gridded_file: str, centers_file: str) -> None:
 
     selected = gridded_df[
         (gridded_df["GOOD_REGION"]) &
-        (gridded_df[mag_above_col]) &
-        (gridded_df[mag_below_col]) &
-        (gridded_df[size_above_col])
+        (gridded_df[MAG_ABOVE]) &
+        (gridded_df[MAG_BELOW]) &
+        (gridded_df[SIZE_ABOVE])
     ]
 
     good_counts = (
@@ -280,15 +296,18 @@ def add_grid_counts(gridded_file: str, centers_file: str) -> None:
         .reset_index(name="good_count")
         )
 
-    merged = pd.merge(grid_info, good_counts, on=["i", "j"], how="left")
-
+    merged = pd.merge(
+        grid_info[["i", "j", "x_center", "y_center", 
+                   "ra_center", "dec_center", "good_fraction"]], 
+        good_counts, on=["i", "j"], 
+        how="left"
+    )
     merged["good_count"] = merged["good_count"].fillna(0)
-    merged["normalized_count"] = (
-        (merged["good_count"] / merged["good_fraction"])
-        .replace([np.inf, np.nan], 0)
-        .astype(int)
-        )
 
-    merged.to_csv(centers_file, index=False)
+    merged["normalized_count"] = merged["good_count"] / merged["good_fraction"]
+    merged.loc[~np.isfinite(merged["normalized_count"]), 
+               "normalized_count"] = np.nan
     
+    output_file = os.path.join(GRID_COUNT_DIR, f"{tile}_grid_counts.csv")
+    merged.to_csv(output_file, index=False)
     print(f"Updated grid counts written to {centers_file}")

@@ -20,33 +20,36 @@ def process_galaxy(galaxy_file: str, output_dir: str):
 
     galaxy_df = pd.read_csv(galaxy_file)
     number = 0
-    count = 0
+    # count = 0
     for _, gal in galaxy_df.iterrows():
         tile = gal["tile_name"]
         cat_file = os.path.join(CAT_DIR, tile + ".cat")
+        cat_df = read_cat(cat_file)
         grid_file = Path(GRID_DIR) / f"{tile}_gridded.csv"
         grid_center_file = Path(GRID_CENTER_DIR) / f"{tile}_grid_centers.csv"
+        grid_counts_file = Path(GRID_COUNT_DIR) / f"{tile}_grid_counts.csv"
         
         if not grid_file.exists():
             print(f"Gridded catalog for {tile} not found, generating files.")
-            cat_df = read_cat(cat_file)
             grid_tile(tile, cat_df)
             flagging(tile, grid_file)
         
         if not grid_center_file.exists():
             print(f"Grid centers for {tile} not found, generating files.")
-            cat_df = read_cat(cat_file)
             compute_grid_centers(tile)
             add_good_fraction(tile, grid_center_file)
-            add_grid_counts(grid_file, grid_center_file)
+
+        if not grid_counts_file.exists():
+            print(f"Grid counts for {tile} not found, generating files.")
+            grid_counts(tile, grid_file, grid_center_file)
         
-        compute_primary_info(grid_center_file, gal, output_dir)
+        compute_primary_info(grid_counts_file, gal, output_dir)
         number += 1
         print(f"Processed {number}/1860 galaxies")
-        count += 1
+        # count += 1
 
-        if count >= 186:
-            break
+        # if count >= 100:
+        #     break
     return
 
 def compute_primary_info(grid_center_file: str, gal: pd.DataFrame,
