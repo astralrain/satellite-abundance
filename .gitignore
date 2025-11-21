@@ -211,6 +211,7 @@ editcount.py
 filteruniquetiles.py
 
 cats/
+grid_counts/
 filter_matched_obj/
 grid_centers*/
 gridded_cats*
@@ -218,3 +219,4 @@ headers/
 masks/
 sdss_primaries*/
 results/
+grid_flags/
