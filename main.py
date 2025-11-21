@@ -30,13 +30,13 @@ def process_galaxy(galaxy_file: str, output_dir: str):
         if not grid_file.exists():
             print(f"Gridded catalog for {tile} not found, generating files.")
             cat_df = read_cat(cat_file)
-            grid_tile(tile, cat_df)
+            grid_tile(tile, cat_df, 5)
             flagging(tile, grid_file)
         
         if not grid_center_file.exists():
             print(f"Grid centers for {tile} not found, generating files.")
             cat_df = read_cat(cat_file)
-            compute_grid_centers(tile)
+            compute_grid_centers(tile, 5)
             add_good_fraction(tile, grid_center_file)
             add_grid_counts(grid_file, grid_center_file)
         
@@ -85,23 +85,23 @@ def compute_primary_info(grid_center_file: str, gal: pd.DataFrame,
 
     out_df = pd.DataFrame(results)
 
-    # exclude primary
-    x = gal["X_IMAGE"]
-    y = gal["Y_IMAGE"]
+    # #exclude primary
+    # x = gal["X_IMAGE"]
+    # y = gal["Y_IMAGE"]
 
-    inside = (
-        (out_df["x_min"] <= x) & (x < out_df["x_max"]) &
-        (out_df["y_min"] <= y) & (y < out_df["y_max"])
-        )
+    # inside = (
+    #     (out_df["x_min"] <= x) & (x < out_df["x_max"]) &
+    #     (out_df["y_min"] <= y) & (y < out_df["y_max"])
+    #     )
 
-    if inside.any():
-        idx = out_df.index[inside][0]
-        out_df.loc[idx, "normalized_count"] = (
-            out_df.loc[idx, "normalized_count"] - 1
-            )
-        print(f"Primary galaxy located in grid cell {idx}: count adjusted by -1.")
-    else:
-        print("Warning: Primary galaxy not found inside any grid cell!")
+    # if inside.any():
+    #     idx = out_df.index[inside][0]
+    #     out_df.loc[idx, "normalized_count"] = (
+    #         out_df.loc[idx, "normalized_count"] - 1
+    #         )
+    #     print(f"Primary galaxy located in grid cell {idx}: count adjusted by -1.")
+    # else:
+    #     print("Warning: Primary galaxy not found inside any grid cell!")
 
     primary_name = gal[SDSS_ID]
     output_file = os.path.join(output_dir, f"{primary_name}_info.csv")
