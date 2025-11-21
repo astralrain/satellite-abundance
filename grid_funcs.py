@@ -251,17 +251,30 @@ def add_grid_counts(gridded_file: str, centers_file: str) -> None:
     Returns:
         None (writes to CSV).
     """
+    mag_above_col = f"MAG_ABOVE_{MAG_LLIM}"
+    mag_below_col = f"MAG_BELOW_{MAG_ULIM}"
+    size_above_col = f"SIZE_ABOVE_{SIZE_LIM}"
+    
     gridded_df = pd.read_csv(gridded_file)
     grid_info = pd.read_csv(centers_file)
 
     required_columns = ["i", "j", "X_IMAGE", "Y_IMAGE", 
-                        "GOOD_REGION"]
+                        "GOOD_REGION", mag_above_col, 
+                        mag_below_col, size_above_col,]
+    
     for col in required_columns:
         if col not in gridded_df.columns:
             raise ValueError(f"Input catalogue must have column '{col}'")
 
+    selected = gridded_df[
+        (gridded_df["GOOD_REGION"]) &
+        (gridded_df[mag_above_col]) &
+        (gridded_df[mag_below_col]) &
+        (gridded_df[size_above_col])
+    ]
+
     good_counts = (
-        gridded_df[gridded_df["GOOD_REGION"]]
+        selected
         .groupby(["i", "j"])
         .size()
         .reset_index(name="good_count")

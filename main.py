@@ -49,7 +49,7 @@ def process_galaxy(galaxy_file: str, output_dir: str):
             break
     return
 
-def compute_primary_info(grid_file: str, gal: pd.DataFrame,
+def compute_primary_info(grid_center_file: str, gal: pd.DataFrame,
                          output_dir: str) -> None:
     """
     Compute angular separation from a primary's ra and dec taken from 
@@ -64,7 +64,7 @@ def compute_primary_info(grid_file: str, gal: pd.DataFrame,
     Returns:
         None, writes output to a csv file.
     """
-    grid_df = pd.read_csv(grid_file)
+    grid_df = pd.read_csv(grid_center_file)
     results = []
 
     sep = angular_separation(gal["ra"], gal["dec"],
@@ -84,6 +84,24 @@ def compute_primary_info(grid_file: str, gal: pd.DataFrame,
         results.append(row)
 
     out_df = pd.DataFrame(results)
+
+    # #exclude primary
+    # x = gal["X_IMAGE"]
+    # y = gal["Y_IMAGE"]
+
+    # inside = (
+    #     (out_df["x_min"] <= x) & (x < out_df["x_max"]) &
+    #     (out_df["y_min"] <= y) & (y < out_df["y_max"])
+    #     )
+
+    # if inside.any():
+    #     idx = out_df.index[inside][0]
+    #     out_df.loc[idx, "normalized_count"] = (
+    #         out_df.loc[idx, "normalized_count"] - 1
+    #         )
+    #     print(f"Primary galaxy located in grid cell {idx}: count adjusted by -1.")
+    # else:
+    #     print("Warning: Primary galaxy not found inside any grid cell!")
 
     primary_name = gal[SDSS_ID]
     output_file = os.path.join(output_dir, f"{primary_name}_info.csv")
