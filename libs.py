@@ -1,3 +1,4 @@
+from astropy.coordinates import SkyCoord
 from astropy.cosmology import Planck18 as cosmo
 from astropy.io import fits
 from astropy.io.fits.header import Header
