@@ -275,7 +275,7 @@ def add_good_fraction(tile: str, centers_file: str):
     print(f"Added 'good_fraction' column and saved to: {centers_file}")
     return df
 
-def grid_counts(gridded_file: str, centers_file: str) -> None:
+def grid_counts(tile: str, flag_file: str, centers_file: str) -> None:
     """
     Add normalized object counts per grid cell into centers_file,
     using the GOOD_REGION flag from gridded_file and correcting 
@@ -290,7 +290,7 @@ def grid_counts(gridded_file: str, centers_file: str) -> None:
     Returns:
         None (writes to CSV).
     """
-    gridded_df = pd.read_csv(gridded_file)
+    flag_df = pd.read_csv(flag_file)
     grid_info = pd.read_csv(centers_file)
 
     required_columns = ["i", "j", "X_IMAGE", "Y_IMAGE", 
@@ -298,14 +298,14 @@ def grid_counts(gridded_file: str, centers_file: str) -> None:
                         MAG_BELOW, SIZE_ABOVE,]
     
     for col in required_columns:
-        if col not in gridded_df.columns:
+        if col not in flag_df.columns:
             raise ValueError(f"Input catalogue must have column '{col}'")
 
-    selected = gridded_df[
-        (gridded_df["GOOD_REGION"]) &
-        (gridded_df[MAG_ABOVE]) &
-        (gridded_df[MAG_BELOW]) &
-        (gridded_df[SIZE_ABOVE])
+    selected = flag_df[
+        (flag_df["GOOD_REGION"]) &
+        (flag_df[MAG_ABOVE]) &
+        (flag_df[MAG_BELOW]) &
+        (flag_df[SIZE_ABOVE])
     ]
 
     good_counts = (
