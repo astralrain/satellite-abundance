@@ -28,11 +28,15 @@ def process_galaxy(galaxy_file: str, output_dir: str):
         grid_file = Path(GRID_DIR) / f"{tile}_gridded.csv"
         grid_center_file = Path(GRID_CENTER_DIR) / f"{tile}_grid_centers.csv"
         grid_counts_file = Path(GRID_COUNT_DIR) / f"{tile}_grid_counts.csv"
+        grid_flags_file = Path(GRID_FLAG_DIR) / f"{tile}_grid_flags.csv"
         
         if not grid_file.exists():
             print(f"Gridded catalog for {tile} not found, generating files.")
             grid_tile(tile, cat_df)
-            flagging(tile, grid_file)
+
+        if not grid_flags_file.exists():
+            print(f"Grid flags for {tile} not found, generating files.")
+            flagging(tile, grid_file, grid_flags_file)
         
         if not grid_center_file.exists():
             print(f"Grid centers for {tile} not found, generating files.")
@@ -41,7 +45,7 @@ def process_galaxy(galaxy_file: str, output_dir: str):
 
         if not grid_counts_file.exists():
             print(f"Grid counts for {tile} not found, generating files.")
-            grid_counts(tile, grid_file, grid_center_file)
+            grid_counts(tile, grid_flags_file, grid_center_file)
         
         compute_primary_info(grid_counts_file, gal, output_dir)
         number += 1
