@@ -100,7 +100,7 @@ def compute_grid_centers(tile: str, ngrid: int = 10):
 
     return output_file
 
-def flag_regions(tile: str, gridded_file: str) -> pd.DataFrame:
+def flag_regions(tile: str, flag_file: str) -> pd.DataFrame:
     """
     Given a catalogue and its tile, mark which objects fall in good or 
     bad regions using masks.
@@ -112,31 +112,31 @@ def flag_regions(tile: str, gridded_file: str) -> pd.DataFrame:
     Returns:
         The pandas DataFrame of the updated catalogue.
     """
-    df = pd.read_csv(gridded_file)
-
-    if f"GOOD_REGION" in df.columns:
+    flag_df = pd.read_csv(flag_file)
+    
+    if f"GOOD_REGION" in flag_df.columns:
         print(f"The catalogue already contains a 'GOOD_REGION' column.")
         return
 
     mask = get_mask(tile)
     ny, nx = mask.shape
 
-    x = df["X_IMAGE"].astype(int)
-    y = df["Y_IMAGE"].astype(int)
+    x = flag_df["X_IMAGE"].astype(int)
+    y = flag_df["Y_IMAGE"].astype(int)
 
-    df["GOOD_REGION"] = False
+    flag_df["GOOD_REGION"] = False
 
     valid = (x >= 0) & (x < nx) & (y >= 0) & (y < ny)
 
-    df.loc[valid, "GOOD_REGION"] = mask[y[valid], x[valid]]
+    flag_df.loc[valid, "GOOD_REGION"] = mask[y[valid], x[valid]]
 
-    df.to_csv(gridded_file, index=False)
+    flag_df.to_csv(flag_file, index=False)
     
-    print(f"Saved updated catalogue with mask info to: {gridded_file}")
+    print(f"Saved updated flag file with mask info to: {flag_file}")
     
-    return df
+    return flag_df
 
-def flag_magllim(gridded_file: str) -> pd.DataFrame:
+def flag_magllim(gridded_file: str, flag_file: str) -> pd.DataFrame:
     """
     Flags sources in a gridded catalogue based on magnitude threshold.
 
@@ -146,24 +146,26 @@ def flag_magllim(gridded_file: str) -> pd.DataFrame:
     Returns:
         pandas.DataFrame: Updated catalogue with a new boolean column 'MAG_ABOVE_18'.
     """
-    df = pd.read_csv(gridded_file)
+    grid_df = pd.read_csv(gridded_file)
 
-    if "MAG_AUTO" not in df.columns:
+    if "MAG_AUTO" not in grid_df.columns:
         raise KeyError("The catalogue does not contain a 'MAG_AUTO' column.")
 
-    if f"MAG_BELOW_{MAG_ULIM}" in df.columns:
-        print(f"The catalogue already contains a 'MAG_BELOW_{MAG_ULIM}' column.")
+    flag_df = pd.read_csv(flag_file)
+    
+    if MAG_ABOVE in flag_df.columns:
+        print(f"The flag file already contains a {MAG_ABOVE} column.")
         return
 
-    df[f"MAG_BELOW_{MAG_ULIM}"] = df["MAG_AUTO"] < MAG_ULIM
+    flag_df[MAG_ABOVE] = grid_df["MAG_AUTO"] > MAG_LLIM
 
-    df.to_csv(gridded_file, index=False)
+    flag_df.to_csv(flag_file, index=False)
 
-    print(f"Saved updated catalogue with magnitude flags below {MAG_ULIM} to: {gridded_file}")
+    print(f"Saved updated flag file with magnitude flags above {MAG_LLIM} to: {flag_file}")
 
-    return df
+    return flag_df
 
-def flag_magulim(gridded_file: str) -> pd.DataFrame:
+def flag_magulim(gridded_file: str, flag_file: str) -> pd.DataFrame:
     """
     Flags sources in a gridded catalogue based on magnitude threshold.
 
@@ -173,24 +175,26 @@ def flag_magulim(gridded_file: str) -> pd.DataFrame:
     Returns:
         pandas.DataFrame: Updated catalogue with a new boolean column 'MAG_ABOVE_18'.
     """
-    df = pd.read_csv(gridded_file)
+    grid_df = pd.read_csv(gridded_file)
 
-    if "MAG_AUTO" not in df.columns:
+    if "MAG_AUTO" not in grid_df.columns:
         raise KeyError("The catalogue does not contain a 'MAG_AUTO' column.")
 
-    if f"MAG_BELOW_{MAG_ULIM}" in df.columns:
-        print(f"The catalogue already contains a 'MAG_BELOW_{MAG_ULIM}' column.")
+    flag_df = pd.read_csv(flag_file)
+    
+    if MAG_BELOW in flag_df.columns:
+        print(f"The flag file already contains a {MAG_BELOW} column.")
         return
 
-    df[f"MAG_BELOW_{MAG_ULIM}"] = df["MAG_AUTO"] < MAG_ULIM
+    flag_df[MAG_BELOW] = grid_df["MAG_AUTO"] < MAG_ULIM
 
-    df.to_csv(gridded_file, index=False)
+    flag_df.to_csv(flag_file, index=False)
 
-    print(f"Saved updated catalogue with magnitude flags below {MAG_ULIM} to: {gridded_file}")
+    print(f"Saved updated flag file with magnitude flags below {MAG_ULIM} to: {flag_file}")
 
-    return df
+    return flag_df
 
-def flag_size(gridded_file: str) -> pd.DataFrame:
+def flag_size(gridded_file: str, flag_file: str) -> pd.DataFrame:
     """
     Flags sources in a gridded catalogue based on magnitude threshold.
 
@@ -200,28 +204,35 @@ def flag_size(gridded_file: str) -> pd.DataFrame:
     Returns:
         pandas.DataFrame: Updated catalogue with a new boolean column 'MAG_ABOVE_18'.
     """
-    df = pd.read_csv(gridded_file)
+    grid_df = pd.read_csv(gridded_file)
 
-    if "FLUX_RADIUS" not in df.columns:
+    if "FLUX_RADIUS" not in grid_df.columns:
         raise KeyError("The catalogue does not contain a 'FLUX_RADIUS' column.")
 
-    if f"SIZE_ABOVE_{SIZE_LIM}" in df.columns:
-        print(f"The catalogue already contains a 'SIZE_ABOVE_{SIZE_LIM}' column.")
+    flag_df = pd.read_csv(flag_file)
+    if SIZE_ABOVE in flag_df.columns:
+        print(f"The flag file already contains a {SIZE_ABOVE} column.")
         return
 
-    df[f"SIZE_ABOVE_{SIZE_LIM}"] = df["FLUX_RADIUS"] > SIZE_LIM
+    flag_df[SIZE_ABOVE] = grid_df["FLUX_RADIUS"] > SIZE_LIM
 
-    df.to_csv(gridded_file, index=False)
+    flag_df.to_csv(flag_file, index=False)
 
-    print(f"Saved updated catalogue with flux radius flags above {SIZE_LIM} to: {gridded_file}")
+    print(f"Saved updated flag file with flux radius flags above {SIZE_LIM} to: {flag_file}")
 
-    return df
+    return flag_df
 
-def flagging(tile: str, gridded_file: str):
-    flag_regions(tile, gridded_file)
-    flag_magllim(gridded_file)
-    flag_magulim(gridded_file)
-    flag_size(gridded_file)
+def flagging(tile: str, gridded_file: str, flag_file: str):
+    df = pd.read_csv(gridded_file)
+    base_cols = ["i", "j", "X_IMAGE", "Y_IMAGE"]
+    flags_df = df[base_cols].copy()
+    
+    flags_df.to_csv(flag_file, index=False)
+    
+    flag_regions(tile, flag_file)
+    flag_magllim(gridded_file, flag_file)
+    flag_magulim(gridded_file, flag_file)
+    flag_size(gridded_file, flag_file)
 
 def add_good_fraction(tile: str, centers_file: str):
     """
