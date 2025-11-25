@@ -72,6 +72,12 @@ def compute_grid_centers(tile: str, ngrid: int = 10):
             y_center = y0 + px_step_y / 2.0
 
             ra_center, dec_center = wcs.all_pix2world(x_center, y_center, 0)
+            
+            coord = SkyCoord(ra=ra_center*u.deg, dec=dec_center*u.deg, frame='icrs')
+            gal = coord.galactic
+
+            l_center = gal.l.degree
+            b_center = gal.b.degree
 
             grid_data.append({
                 "i": i,
@@ -81,7 +87,9 @@ def compute_grid_centers(tile: str, ngrid: int = 10):
                 "x_center": x_center,
                 "y_center": y_center,
                 "ra_center": ra_center,
-                "dec_center": dec_center
+                "dec_center": dec_center,
+                "l_center": l_center,
+                "b_center": b_center,
             })
 
     grid_info = pd.DataFrame(grid_data)
