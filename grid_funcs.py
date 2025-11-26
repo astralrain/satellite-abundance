@@ -317,7 +317,7 @@ def grid_counts(tile: str, flag_file: str, centers_file: str) -> None:
 
     merged = pd.merge(
         grid_info[["i", "j", "x_center", "y_center", 
-                   "ra_center", "dec_center", "good_fraction"]], 
+                   "ra_center", "dec_center", "l_center", "b_center", "good_fraction"]], 
         good_counts, on=["i", "j"], 
         how="left"
     )
