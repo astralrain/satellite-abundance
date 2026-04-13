@@ -206,10 +206,6 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-test.py
-editcount.py
-filteruniquetiles.py
-
 cats/
 grid_counts/
 filter_matched_obj/
