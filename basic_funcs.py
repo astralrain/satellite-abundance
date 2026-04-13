@@ -3,16 +3,17 @@ from consts import *
 
 def read_cat(tile: str) -> pd.DataFrame:
     """
-    Read a CFIS tile.cat with comment headers.
+    Read a CFIS tile.cat to exclude the comment header and into a
+        pandas dataframe.
 
     Parameters:
-        tile (str): Path to the tile of interest. (ie. CFIS_LSB.xxx.yyy.r)
+        tile (str): Name of the tile of interest. (ie. CFIS_LSB.xxx.yyy.r)
 
     Returns:
-        A pandas dataframe of the .cat file.
+        pd.DataFrame: Catalogue contents with columns CAT_COLUMNS.
     """
     if not os.path.exists(tile):
-            raise FileNotFoundError(tile)
+        raise FileNotFoundError(tile)
     return pd.read_csv(
         tile,
         sep=r"\s+",
@@ -22,7 +23,34 @@ def read_cat(tile: str) -> pd.DataFrame:
         engine="python"
     )
 
-def get_fits(tile: str):
+def get_lsb_cat(tile: str) -> str:
+    """
+    Acquires the LSB tile.cat file
+
+    Parameters:
+        tile (str): Name of the tile of interest
+
+    Returns:
+        str: The path of the LSB .cat file.
+    """
+    vosclient = Client()
+
+    source = f"vos:cfis/tiles_LSB_DR5/{tile}.cat"
+
+    local_cache = os.path.join(os.getcwd(), LSB_CAT_DIR)
+    os.makedirs(local_cache, exist_ok=True)
+
+    local_cat = os.path.join(local_cache, f"{tile}.cat")
+    
+    if not os.path.exists(local_cat):
+        vosclient.copy(source, local_cat)
+        print(f"Downloaded {tile}.cat")
+    else:
+        print(f"{tile}.cat Already in folder")
+
+    return local_cat
+
+def get_fits(tile: str) -> str:
     """
     Acquires the tile.fits file
 
@@ -30,7 +58,7 @@ def get_fits(tile: str):
         tile (str): Name of the tile of interest
 
     Returns:
-        The path of the .fits file.
+        str: The path of the .fits file.
     """
     vosclient = Client()
 
@@ -49,15 +77,16 @@ def get_fits(tile: str):
 
     return local_fit
 
-def save_header(tile: str):
+def save_header(tile: str) -> str:
     """
-    Save the FITS primary header of tile to a CSV file (full header with key, value, comment).
+    Save the FITS primary header of tile to a CSV file (full header 
+        with key, value, comment).
 
     Parameters:
         tile (str): Name of the tile of interest.
 
     Returns: 
-        The CSV file of the full header.
+        str: The path of the header file
     """
     fits_path = get_fits(tile)
 
@@ -74,6 +103,8 @@ def save_header(tile: str):
 
     print(f"Header saved to {header_file}")
     
+    os.remove(fits_path)
+    
     return header_file
 
 def load_header(tile: str):
@@ -84,7 +115,7 @@ def load_header(tile: str):
         tile (str): Name of the tile of interest.
 
     Returns:
-        Full header of tile.fits.
+        headers of tile.fits.
     """
     header_file = Path(HEADER_DIR) / f"{tile}_header.csv" 
 
@@ -105,7 +136,7 @@ def load_header(tile: str):
                     value = int(value)
                 else:
                     value = float(value)
-            except:
+            except (ValueError, TypeError):
                 pass
 
             if key:
@@ -142,11 +173,6 @@ def get_mask(tile: str):
     Returns.
         2D array of the contents of MaskData in the .h5 file.
     """
-    # source = Path(f"/arc/projects/NearbyDwarfSearching/masks/{tile}/{tile}.mask.h5")
-    source = Path(MASK_DIR) / f"{tile}.mask.h5"
-
-    if not source.exists():
-        raise FileNotFoundError(f"Mask file not found: {source}")
-
+    source = Path(f"/arc/projects/NearbyDwarfSearching/masks/{tile}/{tile}.mask.h5")
     with h5py.File(source, 'r') as file:
         return file["MaskData"][:]
