@@ -205,14 +205,3 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-
-cats/
-grid_counts/
-filter_matched_obj/
-grid_centers*/
-gridded_cats*
-headers/
-masks/
-sdss_primaries*/
-results/
-grid_flags/
