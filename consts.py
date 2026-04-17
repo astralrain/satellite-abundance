@@ -1,3 +1,26 @@
+#### edit constants here ######
+GOOD_FRACTION_THRESHOLD = 0.6
+
+MAG_ULIM = 24
+MAG_LLIM = 19
+SIZE_LLIM = 3
+
+# # sdss consts
+# GAL_RA = "ra"
+# GAL_DEC = "dec"
+# PRIMARY_DIR = "sdss_primaries"
+# PRIMARY_ID = "objID"
+# TILE_COLUMN = "tile_name"
+
+# kt17 consts
+GAL_RA = "RAdeg"
+GAL_DEC = "DEdeg"
+PRIMARY_DIR = "kt17_primaries"
+PRIMARY_ID = "# PGC"
+TILE_COLUMN = "tile"
+
+#### function constants #######
+
 CAT_COLUMNS = [
         "NUMBER", "X_IMAGE", "Y_IMAGE", "ALPHA_J2000", "DELTA_J2000",
         "MAG_AUTO", "MAGERR_AUTO", "MAG_BEST", "MAGERR_BEST",
@@ -52,7 +75,11 @@ HEADER_END = "_header.csv"
 TILE_SIZE = 10000
 
 MASK_DIR = "masks"
-GOOD_FRACTION_THRESHOLD = 0.6
+
+MAG_ABOVE = f"MAG_ABOVE_{MAG_LLIM}"
+MAG_BELOW = f"MAG_BELOW_{MAG_ULIM}"
+SIZE_BETWEEN = f"SIZE_BETWEEN"
+SIZE_ABOVE = f"SIZE_ABOVE_{SIZE_LLIM}"
 
 # # sdss consts
 # GAL_RA = "ra"
@@ -68,22 +95,22 @@ GOOD_FRACTION_THRESHOLD = 0.6
 # MAG_BELOW = f"MAG_BELOW_{MAG_ULIM}"
 # SIZE_ABOVE = f"SIZE_ABOVE_{SIZE_LIM}"
 
-# kt17 consts
-GAL_RA = "RAdeg"
-GAL_DEC = "DEdeg"
-KT17_PRIMARY_DIR = "kt17_primaries"
-KT17_ID = "# PGC"
-TILE_COLUMN = "tile"
+# # kt17 consts
+# GAL_RA = "RAdeg"
+# GAL_DEC = "DEdeg"
+# KT17_PRIMARY_DIR = "kt17_primaries"
+# KT17_ID = "# PGC"
+# TILE_COLUMN = "tile"
 
-MAG_ULIM = 24
-MAG_LLIM = 19
-SIZE_ULIM = 5000
-SIZE_LLIM = 3
-MAG_ABOVE = f"MAG_ABOVE_{MAG_LLIM}"
-MAG_BELOW = f"MAG_BELOW_{MAG_ULIM}"
-SIZE_BETWEEN = f"SIZE_BETWEEN"
-SIZE_ABOVE = f"SIZE_ABOVE_{SIZE_LLIM}"
-SIZE_BELOW = f"SIZE_BELOW_{SIZE_ULIM}"
+# MAG_ULIM = 24
+# MAG_LLIM = 19
+# SIZE_ULIM = 5000
+# SIZE_LLIM = 3
+# MAG_ABOVE = f"MAG_ABOVE_{MAG_LLIM}"
+# MAG_BELOW = f"MAG_BELOW_{MAG_ULIM}"
+# SIZE_BETWEEN = f"SIZE_BETWEEN"
+# SIZE_ABOVE = f"SIZE_ABOVE_{SIZE_LLIM}"
+# SIZE_BELOW = f"SIZE_BELOW_{SIZE_ULIM}"
 
 # # gaia
 # GAL_RA = "star_ra"
