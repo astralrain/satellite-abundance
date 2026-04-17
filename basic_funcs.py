@@ -177,25 +177,31 @@ def get_mask(tile: str):
     with h5py.File(source, 'r') as file:
         return file["MaskData"][:]
 
-def load_bad_tiles(bad_tiles_file: str) -> set:
+def load_bad_tiles(bad_tiles_file: str) -> set[str]:
     """
-    Load the set of bad tile names from a plain-text file.
-
-    Lines beginning with '#' and blank lines are ignored.  Each remaining
-    line is stripped and treated as one tile name (e.g. "CFIS_LSB.123.456.r").
-
-    Parameters:
-        bad_tiles_file (str): Path to the bad-tile list.
+    Load bad tiles and convert them to CFIS_LSB naming format.
 
     Returns:
-        set[str]: Set of bad tile name strings.
+        set[str]: Set of normalized tile names (CFIS_LSB.*)
     """
     bad: set[str] = set()
+
     with open(bad_tiles_file, "r") as f:
         for line in f:
             line = line.strip()
-            if line and not line.startswith("#"):
-                bad.add(line.split(",")[0].strip())
-    print(f"Loaded {len(bad)} bad tiles from {bad_tiles_file}.")
+
+            if not line or line.startswith("#"):
+                continue
+
+            # Extract tile name (handle CSV-style lines)
+            tile = line.split(",")[0].strip()
+
+            # Replace CFIS prefix with CFIS_LSB
+            if tile.startswith("CFIS."):
+                tile = tile.replace("CFIS.", "CFIS_LSB.", 1)
+
+            bad.add(tile)
+
+    print(f"Loaded {len(bad)} bad tiles (normalized to CFIS_LSB) from {bad_tiles_file}.")
     return bad
  
