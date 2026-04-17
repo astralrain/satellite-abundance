@@ -52,12 +52,14 @@ HEADER_END = "_header.csv"
 TILE_SIZE = 10000
 
 MASK_DIR = "masks"
+GOOD_FRACTION_THRESHOLD = 0.6
 
 # # sdss consts
 # GAL_RA = "ra"
 # GAL_DEC = "dec"
 # SDSS_PRIMARY_DIR = "sdss_primaries"
 # SDSS_ID = "objID"
+# TILE_COLUMN = "tile_name"
 
 # MAG_ULIM = 25
 # MAG_LLIM = 22
@@ -71,8 +73,7 @@ GAL_RA = "RAdeg"
 GAL_DEC = "DEdeg"
 KT17_PRIMARY_DIR = "kt17_primaries"
 KT17_ID = "# PGC"
-
-GOOD_FRACTION_THRESHOLD = 0.6
+TILE_COLUMN = "tile"
 
 MAG_ULIM = 24
 MAG_LLIM = 19
