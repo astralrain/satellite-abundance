@@ -1,9 +1,9 @@
 #### edit constants here ######
 GOOD_FRACTION_THRESHOLD = 0.6
 
-MAG_ULIM = 24
+MAG_ULIM = 25
 MAG_LLIM = 19
-SIZE_LLIM = 3
+SIZE_LLIM = 5
 
 # # sdss consts
 # GAL_RA = "ra"
