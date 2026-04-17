@@ -343,7 +343,7 @@ def flagging(tile: str, gridded_file: Path, flag_file: Path,
         flag_magllim(gridded_df, flag_file)
         flag_magulim(gridded_df, flag_file)
         flag_sizellim(gridded_df, flag_file)
-        flag_sizeulim(gridded_df, flag_file)
+        #flag_sizeulim(gridded_df, flag_file)
         # flag_size_kt17(gridded_file, flag_file)
 
     return flag_file
