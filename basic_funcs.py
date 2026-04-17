@@ -176,3 +176,26 @@ def get_mask(tile: str):
     source = Path(f"/arc/projects/NearbyDwarfSearching/masks/{tile}/{tile}.mask.h5")
     with h5py.File(source, 'r') as file:
         return file["MaskData"][:]
+
+def load_bad_tiles(bad_tiles_file: str) -> set:
+    """
+    Load the set of bad tile names from a plain-text file.
+
+    Lines beginning with '#' and blank lines are ignored.  Each remaining
+    line is stripped and treated as one tile name (e.g. "CFIS_LSB.123.456.r").
+
+    Parameters:
+        bad_tiles_file (str): Path to the bad-tile list.
+
+    Returns:
+        set[str]: Set of bad tile name strings.
+    """
+    bad: set[str] = set()
+    with open(bad_tiles_file, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#"):
+                bad.add(line.split(",")[0].strip())
+    print(f"Loaded {len(bad)} bad tiles from {bad_tiles_file}.")
+    return bad
+ 
