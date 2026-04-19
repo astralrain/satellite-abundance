@@ -602,6 +602,7 @@ def process_grid_counts(tile_file, grid_dir, mag_llim, mag_ulim, size_llim, ngri
         print(f"Saved grid counts: {out_path}  ({len(grid_df)} cells)")
 
         grid_dfs.append(grid_df)
+        clear_output(wait=True)
 
     if not grid_dfs:
         print("WARNING: No tiles processed.")
