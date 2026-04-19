@@ -33,8 +33,6 @@ def download_lsb_cat(tile: str) -> str:
     Returns:
         str: The path of the LSB .cat file.
     """
-    vosclient = Client()
-
     source = f"vos:cfis/tiles_LSB_DR5/{tile}.cat"
 
     local_cache = os.path.join(os.getcwd(), LSB_CAT_DIR)

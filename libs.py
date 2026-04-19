@@ -6,6 +6,7 @@ import astropy.units as u
 from astropy.wcs import WCS
 import csv
 import glob
+import hdf5plugin
 import h5py
 from IPython.display import clear_output
 import math
@@ -19,3 +20,5 @@ from vos import Client
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 from astropy.visualization import ZScaleInterval, ImageNormalize
+
+vosclient = Client()
