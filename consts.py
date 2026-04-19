@@ -1,5 +1,6 @@
 #### edit constants here ######
-GOOD_FRACTION_THRESHOLD = 0.6
+TILE_GOOD_FRACTION_THRESHOLD = 0.6
+GRID_GOOD_FRACTION_THRESHOLD = 0.6
 
 MAG_ULIM = 25
 MAG_LLIM = 19
@@ -72,6 +73,9 @@ PRIMARY_INFO_END = "_info.csv"
 HEADER_DIR = "headers"
 HEADER_END = "_header.csv"
 
+FILTERED_CAT_DIR = "filtered_cat"
+FILTERED_CAT_END = "_filtered.csv"
+
 TILE_SIZE = 10000
 
 MASK_DIR = "masks"
@@ -79,7 +83,7 @@ MASK_DIR = "masks"
 MAG_ABOVE = f"MAG_ABOVE_{MAG_LLIM}"
 MAG_BELOW = f"MAG_BELOW_{MAG_ULIM}"
 SIZE_BETWEEN = f"SIZE_BETWEEN"
-SIZE_ABOVE = f"SIZE_ABOVE_{SIZE_LLIM}"
+# SIZE_ABOVE = f"SIZE_ABOVE_{SIZE_LLIM}"
 
 # # sdss consts
 # GAL_RA = "ra"
