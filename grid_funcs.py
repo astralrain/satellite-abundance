@@ -490,3 +490,194 @@ def grid_counts(tile: str, flag_file: Path, centers_file: Path,
     print(f"Updated grid counts written to {output_file}")
 
     return output_file
+
+def compute_grid_counts(tile, cat_df, mag_llim, mag_ulim, size_llim,
+                        grid_n=10, cut=True):
+    """
+    Grid a tile into grid_n x grid_n cells, count (and normalize) objects per cell.
+    Grid centres are computed via WCS (same method as compute_grid_centers).
+
+    Parameters:
+        tile (str): Tile name
+        cat_df (pd.DataFrame): Filtered catalogue for this tile
+        tile_info_df (pd.DataFrame): Tile info (ra, dec, good_fraction per tile)
+        mag_llim, mag_ulim, size_llim (float): Same cuts as compute_tile_counts
+        grid_n (int): Number of grid divisions per side (default 10)
+        cut (bool): Whether to apply mag/size cuts
+
+    Returns:
+        pd.DataFrame: One row per grid cell with ra, dec, good_fraction,
+                      good_count, normalized_count, grid_i, grid_j
+    """
+    wcs, nx, ny = load_header(tile)
+    x_step = nx / grid_n
+    y_step = ny / grid_n
+
+    cond = np.ones(len(cat_df), dtype=bool)
+    if cut:
+        cond &= cat_df["MAG_AUTO"].values   > mag_llim
+        cond &= cat_df["MAG_AUTO"].values   < mag_ulim
+        cond &= cat_df["FLUX_RADIUS"].values > size_llim
+    cut_df = cat_df[cond].copy()
+
+    x = cut_df["X_IMAGE"].values.astype(float)
+    y = cut_df["Y_IMAGE"].values.astype(float)
+
+    col_idx = np.floor(x / x_step).astype(int).clip(0, grid_n - 1) 
+    row_idx = np.floor(y / y_step).astype(int).clip(0, grid_n - 1) 
+
+    mask = get_mask(tile)
+
+    cell_rows = []
+    for i in range(grid_n):
+        for j in range(grid_n):
+            x0, x1 = int(i * x_step), int((i + 1) * x_step)
+            y0, y1 = int(j * y_step), int((j + 1) * y_step)
+
+            cell_mask = mask[y0:y1, x0:x1]
+            total_pix = cell_mask.size
+            good_pix = int(np.sum(cell_mask))
+            cell_good_frac = good_pix / total_pix if total_pix > 0 else float("nan")
+
+            if np.isnan(cell_good_frac) or cell_good_frac < GRID_GOOD_FRACTION_THRESHOLD:
+                continue
+
+            in_cell    = (col_idx == i) & (row_idx == j)
+            good_count = int(in_cell.sum())
+
+            normalized_count = (good_count / cell_good_frac
+                                if cell_good_frac > 0 else float("nan"))
+
+            x_center = x0 + x_step / 2.0
+            y_center = y0 + y_step / 2.0
+            ra_center, dec_center = wcs.all_pix2world(x_center, y_center, 0)
+
+            cell_rows.append({
+                "tile": tile,
+                "i": i,
+                "j": j,
+                "x_center": x_center,
+                "y_center": y_center,
+                "ra_center": float(ra_center),
+                "dec_center": float(dec_center),
+                "good_fraction": cell_good_frac,
+                "good_count": good_count,
+                "normalized_count": normalized_count,
+            })
+
+    return pd.DataFrame(cell_rows)
+
+def process_grid_counts(tile_file, grid_dir, mag_llim, mag_ulim, size_llim, ngrid):
+    tile_info_df = pd.read_csv("tile_information.csv")
+
+    tiles, tile_info_df = process_tiles(tile_file, tile_info_df)
+    clear_output(wait=True)
+
+    grid_dir = Path(grid_dir)
+    grid_dir.mkdir(parents=True, exist_ok=True)
+
+    grid_dfs = []
+
+    for tile in tiles:
+        cat_path = Path(FILTERED_CAT_DIR) / f"{tile}{FILTERED_CAT_END}"
+
+        if cat_path.exists():
+            cat_df = pd.read_csv(cat_path)
+        else:
+            cat_df = filter_tile(tile)
+
+        grid_df = compute_grid_counts(
+            tile,
+            cat_df,
+            mag_llim,
+            mag_ulim,
+            size_llim,
+            ngrid
+        )
+        print(grid_df)
+        grid_dfs.append(grid_df)
+
+        out_path = grid_dir / f"{tile}_grid{ngrid}.csv"
+        grid_df.to_csv(out_path, index=False)
+        print(f"Saved grid counts: {out_path}  ({len(grid_df)} cells)")
+
+        grid_dfs.append(grid_df)
+
+    if not grid_dfs:
+        print("WARNING: No tiles processed.")
+        return pd.DataFrame()
+
+    return grid_dfs
+
+def match_grid_to_primaries(primaries_file, grid_dir, output_file, max_sep, ngrid=10):
+    primaries_df = pd.read_csv(primaries_file)
+
+    for col in (PRIMARY_ID, GAL_RA, GAL_DEC, "Deff"):
+        if col not in primaries_df.columns:
+            raise ValueError(f"primaries_file must contain '{col}'")
+
+    prim_ras  = primaries_df[GAL_RA].values
+    prim_decs = primaries_df[GAL_DEC].values
+
+    grid_dir = Path(grid_dir)
+    grid_files = sorted(grid_dir.glob(f"*_grid{ngrid}.csv"))
+
+    if not grid_files:
+        print("WARNING: No grid count files found.")
+        return
+
+    os.makedirs(PRIMARY_DIR, exist_ok=True)
+    combined_chunks = []
+
+    for grid_file in grid_files:
+        grid_df = pd.read_csv(grid_file)
+
+        cell_ras  = grid_df["ra_center"].values
+        cell_decs = grid_df["dec_center"].values
+
+        seps = angular_separation(
+            cell_ras[:, np.newaxis],
+            cell_decs[:, np.newaxis],
+            prim_ras[np.newaxis, :],
+            prim_decs[np.newaxis, :],
+        )
+
+        nearest_prim_idx = np.argmin(seps, axis=1)
+        nearest_sep      = seps[np.arange(len(grid_df)), nearest_prim_idx]
+        within_radius    = nearest_sep <= max_sep
+
+        if not within_radius.any():
+            continue
+
+        cells_in      = grid_df[within_radius].copy().reset_index(drop=True)
+        prim_idx_in   = nearest_prim_idx[within_radius]
+        sep_in        = nearest_sep[within_radius]
+        matched_prims = primaries_df.iloc[prim_idx_in].reset_index(drop=True)
+
+        proj_dists = projected_distance(sep_in, matched_prims["Deff"].values)
+
+        cells_in["primary_id"] = matched_prims[PRIMARY_ID].values
+        cells_in["primary_ra"] = matched_prims[GAL_RA].values
+        cells_in["primary_dec"] = matched_prims[GAL_DEC].values
+        cells_in["ang_sep_deg"] = sep_in
+        cells_in["proj_dist_mpc"] = proj_dists
+
+        combined_chunks.append(cells_in)
+
+    if not combined_chunks:
+        print("WARNING: No matches found.")
+        return
+
+    combined_df = pd.concat(combined_chunks, ignore_index=True)
+
+    for pid, group in combined_df.groupby("primary_id"):
+        out_path = os.path.join(PRIMARY_DIR, f"{pid}_grid_counts.csv")
+        group.to_csv(out_path, index=False)
+        print(f"{pid}: {len(group)} cells → {out_path}")
+
+    combined_path = os.path.join(os.getcwd(), output_file)
+    combined_df.to_csv(combined_path, index=False)
+
+    print(f"\nCombined file ({len(combined_df)} rows) → {combined_path}")
+
+    return combined_df

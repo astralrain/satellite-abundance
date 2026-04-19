@@ -23,7 +23,7 @@ def read_cat(tile: str) -> pd.DataFrame:
         engine="python"
     )
 
-def get_lsb_cat(tile: str) -> str:
+def download_lsb_cat(tile: str) -> str:
     """
     Acquires the LSB tile.cat file
 
@@ -50,7 +50,7 @@ def get_lsb_cat(tile: str) -> str:
 
     return local_cat
 
-def get_fits(tile: str) -> str:
+def download_fits(tile: str) -> str:
     """
     Acquires the tile.fits file
 
@@ -88,7 +88,7 @@ def save_header(tile: str) -> str:
     Returns: 
         str: The path of the header file
     """
-    fits_path = get_fits(tile)
+    fits_path = download_fits(tile)
 
     with fits.open(fits_path) as hdul:
         header = hdul[0].header
