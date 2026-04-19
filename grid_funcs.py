@@ -612,9 +612,16 @@ def process_grid_counts(tile_file, grid_dir, mag_llim, mag_ulim, size_llim, ngri
 def match_grid_to_primaries(primaries_file, grid_dir, output_file, max_sep, ngrid=10):
     primaries_df = pd.read_csv(primaries_file)
 
-    for col in (PRIMARY_ID, GAL_RA, GAL_DEC, "Deff"):
+    for col in (PRIMARY_ID, GAL_RA, GAL_DEC):
         if col not in primaries_df.columns:
             raise ValueError(f"primaries_file must contain '{col}'")
+        
+    if "Deff" in primaries_df.columns:
+        dist_mode = "deff"
+    elif "z" in primaries_df.columns:
+        dist_mode = "redshift"
+    else:
+        raise ValueError("primaries_file must contain either 'Deff' or 'z'")
 
     prim_ras  = primaries_df[GAL_RA].values
     prim_decs = primaries_df[GAL_DEC].values
@@ -654,7 +661,11 @@ def match_grid_to_primaries(primaries_file, grid_dir, output_file, max_sep, ngri
         sep_in        = nearest_sep[within_radius]
         matched_prims = primaries_df.iloc[prim_idx_in].reset_index(drop=True)
 
-        proj_dists = projected_distance(sep_in, matched_prims["Deff"].values)
+        proj_dists = (
+            projected_distance(sep_in, matched_prims["Deff"].values)
+            if dist_mode == "deff"
+            else projected_distance(sep_in, angular_diameter_distance(matched_prims["z"].values))
+        )
 
         cells_in["primary_id"] = matched_prims[PRIMARY_ID].values
         cells_in["primary_ra"] = matched_prims[GAL_RA].values

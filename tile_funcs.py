@@ -185,9 +185,16 @@ def match_tiles_to_primaries(valid_tiles_df: pd.DataFrame, primaries_file: str, 
         if col not in valid_tiles_df.columns:
             raise ValueError(f"valid_tiles_df must contain '{col}'")
 
-    for col in (PRIMARY_ID, GAL_RA, GAL_DEC, "Deff"):
+    for col in (PRIMARY_ID, GAL_RA, GAL_DEC):
         if col not in primaries_df.columns:
             raise ValueError(f"primaries_file must contain '{col}'")
+    
+    if "Deff" in primaries_df.columns:
+        dist_mode = "deff"
+    elif "z" in primaries_df.columns:
+        dist_mode = "redshift"
+    else:
+        raise ValueError("primaries_file must contain either 'Deff' or 'z'")
 
     tile_ras  = valid_tiles_df["ra"].values
     tile_decs = valid_tiles_df["dec"].values
@@ -223,8 +230,11 @@ def match_tiles_to_primaries(valid_tiles_df: pd.DataFrame, primaries_file: str, 
 
     matched_prims = primaries_df.iloc[prim_idx_in].reset_index(drop=True)
 
-    proj_dists = projected_distance(sep_in, matched_prims["Deff"].values)
-
+    proj_dists = (
+            projected_distance(sep_in, matched_prims["Deff"].values)
+            if dist_mode == "deff"
+            else projected_distance(sep_in, angular_diameter_distance(matched_prims["z"].values))
+        )
     tiles_in["primary_id"] = matched_prims[PRIMARY_ID].values
     tiles_in["primary_ra"] = matched_prims[GAL_RA].values
     tiles_in["primary_dec"] = matched_prims[GAL_DEC].values
