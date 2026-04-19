@@ -1,6 +1,8 @@
 from libs import *
 from consts import *
 from basic_funcs import *
+from ang_funcs import *
+from tile_funcs import *
 
 def grid_tile(tile: str, cat_df: pd.DataFrame, ngrid: int = 10) -> str:
     """
@@ -482,7 +484,7 @@ def grid_counts(tile: str, flag_file: Path, centers_file: Path,
         )
         merged["good_count"] = merged["good_count"].fillna(0)
     
-        merged = merged[merged["good_fraction"] > GOOD_FRACTION_THRESHOLD].copy()
+        merged = merged[merged["good_fraction"] > GRID_GOOD_FRACTION_THRESHOLD].copy()
         merged["normalized_count"] = merged["good_count"] / merged["good_fraction"]
     
     output_file = os.path.join(GRID_COUNT_DIR, f"{tile}_grid_counts.csv")
